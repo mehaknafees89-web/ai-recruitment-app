@@ -362,26 +362,49 @@ Please submit your resume and cover letter. We are an equal opportunity employer
                                     
                                 summary = p.get("description", "N/A")
                                 
-                                location = "N/A"
+                                skills = "N/A"
+                                education = "N/A"
+                                experience = "N/A"
+                                
                                 if summary != "N/A":
-                                    loc_match = re.search(r'Location:\s*([^.\n]*)', summary, re.IGNORECASE)
-                                    if loc_match:
-                                        location = loc_match.group(1).strip()
+                                    # Extract Skills
+                                    tech_skills = ["Python", "SQL", "Machine Learning", "Power BI", "Tableau", "NLP", "Deep Learning", "Java", "C++", "AWS", "Azure", "GCP", "React", "Angular", "Node.js", "Excel", "Data Analysis", "TensorFlow", "PyTorch"]
+                                    found_skills = []
+                                    for skill in tech_skills:
+                                        if re.search(rf'\b{re.escape(skill)}\b', summary, re.IGNORECASE):
+                                            found_skills.append(skill)
+                                    if found_skills:
+                                        skills = ", ".join(found_skills)
+                                        
+                                    # Extract Education
+                                    edu_match = re.search(r'Education:\s*([^\n]*)', summary, re.IGNORECASE)
+                                    if edu_match:
+                                        education = edu_match.group(1).strip()
                                     else:
-                                        for c_data in COUNTRY_DATA.values():
-                                            for city in c_data["cities"]:
-                                                if city.lower() in summary.lower():
-                                                    location = city
-                                                    break
-                                            if location != "N/A":
+                                        edu_keywords = ["University", "College", "Institute"]
+                                        for kw in edu_keywords:
+                                            kw_match = re.search(rf'([^,.\n]*{kw}[^,.\n]*)', summary, re.IGNORECASE)
+                                            if kw_match:
+                                                education = kw_match.group(1).strip()
                                                 break
+                                                
+                                    # Extract Experience
+                                    exp_match = re.search(r'Experience:\s*([^\n]*)', summary, re.IGNORECASE)
+                                    if exp_match:
+                                        experience = exp_match.group(1).strip()
+                                    else:
+                                        at_match = re.search(r'\bat\s+([A-Z][a-zA-Z0-9\s&]+?)(?=[.,\n]|$)', summary)
+                                        if at_match and len(at_match.group(1).split()) <= 4:
+                                            experience = at_match.group(1).strip()
                                                 
                                 linkedin_url = p.get("url", "N/A")
                                 
                                 extracted_profiles.append({
                                     "Name": name,
                                     "Job Title": job_title,
-                                    "Location": location,
+                                    "Skills": skills,
+                                    "Education": education,
+                                    "Experience": experience,
                                     "Summary": summary,
                                     "LinkedIn URL": linkedin_url
                                 })
