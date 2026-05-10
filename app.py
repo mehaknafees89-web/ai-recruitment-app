@@ -5,6 +5,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import re
 from datetime import datetime, date, time, timedelta, timezone
+import requests
+import io
 
 def extract_text_from_pdf(file):
     try:
@@ -159,7 +161,7 @@ def main():
     
     st.markdown("---")
     
-    tab1, tab2, tab3 = st.tabs(["📝 Job Posting Generator", "📊 Resume Screening", "📅 Interview Scheduling"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📝 Job Posting Generator", "📊 Resume Screening", "📅 Interview Scheduling", "🔍 LinkedIn Profile Search"])
     
     # --- Feature 1: Automated Job Posting ---
     with tab1:
@@ -306,6 +308,117 @@ Please submit your resume and cover letter. We are an equal opportunity employer
                 
         else:
             st.info("Please scan and match resumes in the 'Resume Screening' tab first to generate a schedule.")
+
+    # --- Feature 4: LinkedIn Profile Search ---
+    with tab4:
+        st.header("🔍 LinkedIn Profile Search")
+        st.markdown("Search for real LinkedIn profiles by keyword (e.g. job title or skills) using RapidAPI.")
+        
+        search_keyword = st.text_input("Search Keyword", placeholder="e.g. Python Developer Karachi")
+        
+        if st.button("Search Profiles"):
+            if not search_keyword:
+                st.warning("Please enter a keyword to search.")
+            else:
+                with st.spinner("Fetching profiles from LinkedIn via RapidAPI..."):
+                    import http.client
+                    import json
+                    import urllib.parse
+                    
+                    try:
+                        conn = http.client.HTTPSConnection("linkedin-profile-search-api-by-name-job-title-company.p.rapidapi.com")
+                        headers = {
+                            'x-rapidapi-key': "11de715bc1msh4cd9d1e5a295836p186943jsn158b752bf364",
+                            'x-rapidapi-host': "linkedin-profile-search-api-by-name-job-title-company.p.rapidapi.com",
+                            'Content-Type': "application/json"
+                        }
+                        
+                        encoded_keyword = urllib.parse.quote(search_keyword)
+                        conn.request("GET", f"/sync?k={encoded_keyword}&linkedin_type=individual&depth=3", headers=headers)
+                        
+                        res = conn.getresponse()
+                        raw_data = res.read().decode("utf-8")
+                        data = json.loads(raw_data)
+                        
+                        st.session_state['raw_api_data'] = data
+                        
+                        if isinstance(data, dict):
+                            profiles = data.get("data", data.get("items", data.get("people", data.get("results", []))))
+                        elif isinstance(data, list):
+                            profiles = data
+                        else:
+                            profiles = []
+                            
+                        if not profiles:
+                            st.info("No profiles found or API rate limit exceeded.")
+                        else:
+                            extracted_profiles = []
+                            for p in profiles:
+                                raw_title = p.get("title", "")
+                                if " - " in raw_title:
+                                    parts = raw_title.split(" - ", 1)
+                                    name = parts[0].strip()
+                                    job_title = parts[1].strip()
+                                else:
+                                    name = raw_title if raw_title else "N/A"
+                                    job_title = "N/A"
+                                    
+                                summary = p.get("description", "N/A")
+                                
+                                location = "N/A"
+                                if summary != "N/A":
+                                    loc_match = re.search(r'Location:\s*([^.\n]*)', summary, re.IGNORECASE)
+                                    if loc_match:
+                                        location = loc_match.group(1).strip()
+                                    else:
+                                        for c_data in COUNTRY_DATA.values():
+                                            for city in c_data["cities"]:
+                                                if city.lower() in summary.lower():
+                                                    location = city
+                                                    break
+                                            if location != "N/A":
+                                                break
+                                                
+                                linkedin_url = p.get("url", "N/A")
+                                
+                                extracted_profiles.append({
+                                    "Name": name,
+                                    "Job Title": job_title,
+                                    "Location": location,
+                                    "Summary": summary,
+                                    "LinkedIn URL": linkedin_url
+                                })
+                                
+                            df_profiles = pd.DataFrame(extracted_profiles)
+                            st.session_state['linkedin_profiles'] = df_profiles
+                            
+                    except Exception as e:
+                        st.error(f"Error fetching data: {e}")
+        
+        if 'raw_api_data' in st.session_state:
+            with st.expander("🛠️ Debug: Show Raw API Response"):
+                st.json(st.session_state['raw_api_data'])
+                
+        if 'linkedin_profiles' in st.session_state and not st.session_state['linkedin_profiles'].empty:
+            df_profiles = st.session_state['linkedin_profiles']
+            st.dataframe(
+                df_profiles,
+                column_config={
+                    "LinkedIn URL": st.column_config.LinkColumn("LinkedIn URL")
+                },
+                use_container_width=True
+            )
+            
+            excel_buffer = io.BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                df_profiles.to_excel(writer, index=False, sheet_name='Leads')
+            
+            st.download_button(
+                label="📥 Export to Excel",
+                data=excel_buffer.getvalue(),
+                file_name="linkedin_leads.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
 if __name__ == "__main__":
     main()

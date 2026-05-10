@@ -16,7 +16,19 @@ AI automation in the recruitment process leverages artificial intelligence to st
 
 ---
 
-### 2. Resume Screening and Shortlisting
+### 2. LinkedIn Candidate Sourcing
+- Using RapidAPI LinkedIn scraper to search candidates by keyword
+- Data collected: Name, Description, Email, Phone Number, Address, Location
+- Saving scraped data to Excel sheet
+- Displaying profiles in interactive dashboard
+- Benefits and challenges of LinkedIn data scraping
+- Compliance with data privacy laws (GDPR)
+
+**Tools Used:** RapidAPI, LinkedIn API, Pandas, OpenPyXL
+
+---
+
+### 3. Resume Screening and Shortlisting
 - Natural Language Processing (NLP) analyzes resumes to identify relevant skills, experience, and qualifications.
 - AI scores and ranks candidates based on predefined job requirements.
 - Reduces time spent manually reviewing thousands of applications.
@@ -25,7 +37,7 @@ AI automation in the recruitment process leverages artificial intelligence to st
 
 ---
 
-### 3. Candidate Matching
+### 4. Candidate Matching
 - AI models match candidates' profiles and skills with job descriptions to identify best fits.
 - Machine learning algorithms predict candidate success based on past hiring data.
 - Uses similarity scoring to rank candidates.
@@ -34,7 +46,7 @@ AI automation in the recruitment process leverages artificial intelligence to st
 
 ---
 
-### 4. Bias Reduction & Human-in-the-Loop (HITL)
+### 5. Bias Reduction & Human-in-the-Loop (HITL)
 - Models are trained to reduce human bias and promote diversity and inclusion by removing demographic information during screening.
 - **Continuous Auditing:** Implements Human-in-the-Loop (HITL) systems where recruiters blindly review subsets of AI-rejected candidates to ensure algorithms haven't developed unforeseen biases.
 - Ensures fair evaluation based on skills and experience only.
@@ -43,7 +55,7 @@ AI automation in the recruitment process leverages artificial intelligence to st
 
 ---
 
-### 5. Automated Interview Scheduling
+### 6. Automated Interview Scheduling
 - AI chatbots communicate with candidates to schedule interviews automatically.
 - Syncs with recruiters' calendars to find available slots.
 - Sends reminders and follow-ups to candidates.
@@ -52,7 +64,7 @@ AI automation in the recruitment process leverages artificial intelligence to st
 
 ---
 
-### 6. AI-Powered Interviews & Pre-Screening
+### 7. AI-Powered Interviews & Pre-Screening
 - Video interview platforms use AI to analyze candidate responses, tone, and body language.
 - **Conversational AI:** Upgraded chatbots conduct preliminary, conversational technical or behavioral screens via messaging platforms before a human recruiter steps in.
 - Automated scoring based on predefined competency frameworks.
@@ -61,7 +73,7 @@ AI automation in the recruitment process leverages artificial intelligence to st
 
 ---
 
-### 7. Onboarding Automation
+### 8. Onboarding Automation
 - AI automates document collection, verification, and training assignments.
 - Personalizes onboarding experience for each new hire.
 

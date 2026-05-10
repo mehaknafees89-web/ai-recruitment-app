@@ -2,3 +2,5 @@ streamlit
 PyPDF2
 pandas
 scikit-learn
+openpyxl
+requests
