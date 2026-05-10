@@ -248,10 +248,7 @@ Please submit your resume and cover letter. We are an equal opportunity employer
         if 'results_df' in st.session_state and not st.session_state['results_df'].empty:
             df = st.session_state['results_df']
             st.subheader("🏆 Candidate Rankings")
-            st.dataframe(
-                df.style.background_gradient(cmap='Greens', subset=['Match Score (%)']),
-                use_container_width=True
-            )
+            st.dataframe(df, use_container_width=True)
             
             top_candidate = df.iloc[0]['Candidate Name / File']
             top_score = df.iloc[0]['Match Score (%)']
