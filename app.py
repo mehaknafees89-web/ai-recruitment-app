@@ -7,6 +7,8 @@ import re
 from datetime import datetime, date, time, timedelta, timezone
 import requests
 import io
+import plotly.express as px
+import plotly.graph_objects as go
 
 def extract_text_from_pdf(file):
     try:
@@ -135,11 +137,13 @@ def main():
     st.sidebar.header("🌍 Worldwide Localization")
     
     # Step 1: Country Selection
-    selected_country = st.sidebar.selectbox("Select Country", list(COUNTRY_DATA.keys()))
+    countries = list(COUNTRY_DATA.keys())
+    selected_country = st.sidebar.selectbox("Select Country", countries, index=countries.index("Pakistan"))
     
     # Step 2: City Selection based on Country
     cd = COUNTRY_DATA[selected_country]
-    selected_city = st.sidebar.selectbox("Select Major City", cd["cities"])
+    cities = list(cd["cities"])
+    selected_city = st.sidebar.selectbox("Select Major City", cities, index=cities.index("Karachi"))
     
     # --- Global Dashboard KPIs ---
     st.subheader("📊 Recruitment Overview")
@@ -159,6 +163,74 @@ def main():
     col2.metric("Top Match Score", top_score)
     col3.metric("Avg Match Score", avg_score)
     
+    st.markdown("---")
+    
+    # --- Analytics Section ---
+    st.subheader("📈 Analytics")
+    
+    chart_col1, chart_col2 = st.columns(2)
+    
+    with chart_col1:
+        if 'results_df' in st.session_state and not st.session_state['results_df'].empty:
+            df = st.session_state['results_df']
+            qualified = len(df[df['Match Score (%)'] > 50])
+            unqualified = len(df) - qualified
+            
+            fig_pie = px.pie(
+                names=['Qualified (>50%)', 'Unqualified (<=50%)'], 
+                values=[qualified, unqualified],
+                title="Qualified vs Unqualified Candidates",
+                hole=0.4,
+                color_discrete_sequence=['#2ecc71', '#e74c3c']
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+        else:
+            st.info("Upload and scan resumes to view the Qualified vs Unqualified chart.")
+            
+    with chart_col2:
+        if 'skill_counts' in st.session_state:
+            skills = st.session_state['skill_counts']
+            active_skills = {k.title(): v for k, v in skills.items() if v > 0}
+            if active_skills:
+                df_skills = pd.DataFrame(list(active_skills.items()), columns=['Skill', 'Count']).sort_values(by='Count', ascending=True)
+                fig_bar = px.bar(
+                    df_skills, 
+                    x='Count', 
+                    y='Skill', 
+                    orientation='h',
+                    title="Top Skills Distribution (Scanned Resumes)",
+                    color='Count',
+                    color_continuous_scale='Blues'
+                )
+                st.plotly_chart(fig_bar, use_container_width=True)
+            else:
+                st.info("No common skills found in scanned resumes.")
+        else:
+            st.info("Upload and scan resumes to view the Top Skills Distribution.")
+            
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    profiles_found = len(st.session_state.get('linkedin_profiles', []))
+    cvs_uploaded = len(st.session_state.get('results_df', []))
+    
+    qualified_cands = 0
+    if 'results_df' in st.session_state and not st.session_state['results_df'].empty:
+        qualified_cands = len(st.session_state['results_df'][st.session_state['results_df']['Match Score (%)'] > 50])
+        
+    interviews_scheduled = len(st.session_state.get('schedule_df', []))
+    
+    if profiles_found > 0 or cvs_uploaded > 0 or interviews_scheduled > 0:
+        fig_funnel = go.Figure(go.Funnel(
+            y=["LinkedIn Profiles Found", "CVs Uploaded", "Qualified Candidates", "Interview Scheduled"],
+            x=[profiles_found, cvs_uploaded, qualified_cands, interviews_scheduled],
+            textinfo="value+percent initial",
+            marker={"color": ["#3498db", "#9b59b6", "#2ecc71", "#e67e22"]}
+        ))
+        fig_funnel.update_layout(title="Hiring Funnel")
+        st.plotly_chart(fig_funnel, use_container_width=True)
+    else:
+        st.info("Interact with the dashboard to populate the Hiring Funnel.")
+        
     st.markdown("---")
     
     tab1, tab2, tab3, tab4 = st.tabs(["📝 Job Posting Generator", "📊 Resume Screening", "📅 Interview Scheduling", "🔍 LinkedIn Profile Search"])
@@ -235,6 +307,16 @@ Please submit your resume and cover letter. We are an equal opportunity employer
                     scores = match_resumes(cleaned_jd, resumes_text)
                     scores_percent = [round(score * 100, 2) for score in scores]
                     
+                    # Extract Skills Distribution
+                    tech_skills = ["python", "sql", "machine learning", "java", "aws", "azure", "gcp", "react", "node", "excel", "data analysis", "agile", "communication", "leadership"]
+                    skill_counts = {skill: 0 for skill in tech_skills}
+                    for text in resumes_text:
+                        for skill in tech_skills:
+                            if re.search(rf'\b{re.escape(skill)}\b', text):
+                                skill_counts[skill] += 1
+                                
+                    st.session_state['skill_counts'] = skill_counts
+                    
                     results_df = pd.DataFrame({
                         "Candidate Name / File": file_names,
                         "Status": ["Bias Removed ✅"] * len(file_names),
@@ -298,6 +380,7 @@ Please submit your resume and cover letter. We are an equal opportunity employer
                     current_time += timedelta(hours=1)
                     
                 schedule_df = pd.DataFrame(schedule_data)
+                st.session_state['schedule_df'] = schedule_df
                 
                 st.subheader("📅 Generated Interview Schedule")
                 st.table(schedule_df)
@@ -330,7 +413,8 @@ Please submit your resume and cover letter. We are an equal opportunity employer
                             'Content-Type': "application/json"
                         }
                         
-                        encoded_keyword = urllib.parse.quote(search_keyword)
+                        full_search_keyword = f"{search_keyword} {selected_city} {selected_country}"
+                        encoded_keyword = urllib.parse.quote(full_search_keyword)
                         conn.request("GET", f"/sync?k={encoded_keyword}&linkedin_type=individual&depth=3", headers=headers)
                         
                         res = conn.getresponse()
@@ -410,6 +494,7 @@ Please submit your resume and cover letter. We are an equal opportunity employer
                                 })
                                 
                             df_profiles = pd.DataFrame(extracted_profiles)
+                            df_profiles.index = df_profiles.index + 1
                             st.session_state['linkedin_profiles'] = df_profiles
                             
                     except Exception as e:
