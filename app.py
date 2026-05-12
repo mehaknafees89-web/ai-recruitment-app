@@ -201,6 +201,10 @@ div[data-baseweb="popover"] * {
     background-color: #FFFFFF !important;
     color: #1E3A5F !important;
 }
+.stTextInput input::placeholder, .stTextArea textarea::placeholder {
+    color: #95A5A6 !important;
+    opacity: 1 !important;
+}
 
 /* Sidebar File Uploader */
 section[data-testid="stSidebar"] [data-testid="stFileUploader"] {
@@ -245,7 +249,7 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] * {
     # Step 2: City Selection based on Country
     cd = COUNTRY_DATA[selected_country]
     cities = list(cd["cities"])
-    selected_city = st.sidebar.selectbox("Select Major City", cities, index=cities.index("Karachi"))
+    selected_city = st.sidebar.selectbox("Select Major City", cities, index=0)
     
     # --- Global Dashboard KPIs ---
     st.subheader("📊 Recruitment Overview")
@@ -372,13 +376,13 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] * {
         with col1:
             job_title = st.text_input("Job Title", placeholder="e.g. Senior Data Scientist")
             # Auto-suggest companies based on country
-            company_name = st.text_input("Company Name", placeholder=cd["companies"])
+            company_name = st.text_input("Company Name", placeholder="e.g. Systems Limited, TCS Pakistan")
             # Auto-filled location based on sidebar selection
             location = st.text_input("Location", value=f"{selected_city}, {selected_country}")
         with col2:
             req_skills = st.text_input("Required Skills", placeholder="e.g. Python, SQL, Machine Learning")
             # Auto-suggest currency based on country
-            salary_range = st.text_input("Salary Range", placeholder=f"e.g. 80,000 - 120,000 {cd['currency']}")
+            salary_range = st.text_input("Salary Range", placeholder="e.g. 80,000 - 120,000 PKR")
             
         if st.button("Generate Job Posting"):
             if job_title and company_name:
