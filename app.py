@@ -234,6 +234,30 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] * {
     color: #FFFFFF !important;
     background-color: transparent !important;
 }
+/* Sidebar Text Area */
+section[data-testid="stSidebar"] .stTextArea textarea {
+    background-color: #FFFFFF !important;
+    color: #1E3A5F !important;
+    border: 1px solid #5DADE2 !important;
+    border-radius: 6px !important;
+    pointer-events: auto !important;
+    cursor: text !important;
+}
+/* Sidebar Collapse Button */
+button[data-testid="collapsedControl"] {
+    background-color: #1E3A5F !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+}
+button[data-testid="collapsedControl"]::after {
+    content: "☰" !important;
+    color: white !important;
+    font-size: 20px !important;
+}
+button[data-testid="collapsedControl"] svg {
+    display: none !important;
+}
 </style>
 """
     st.markdown(global_css, unsafe_allow_html=True)
@@ -523,7 +547,7 @@ Please submit your resume and cover letter. We are an equal opportunity employer
 
     # --- Feature 4: LinkedIn Profile Search ---
     with tab4:
-        st.header("🔍 HR Leads Dashboard")
+        st.markdown("# 🔍 LinkedIn Profile Search")
         st.markdown("Search and manage LinkedIn professionals matching your criteria.")
         
         search_col, btn_col = st.columns([4, 1])
